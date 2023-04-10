@@ -31,7 +31,6 @@ Go to the project directory
 Install it using docker
 
 ```bash
-  cd vaultclient
   docker build -t imagename .
 ```
 
