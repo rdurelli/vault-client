@@ -5,6 +5,7 @@ import hvac
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from services.vaultservice import VaultService
 
 from models.payload import Payload
 
@@ -23,6 +24,8 @@ client = hvac.Client(
 )
 print(client.is_authenticated())
 
+vault_service = VaultService(logger, client)
+
 
 @app.get("/health")
 async def health():
@@ -33,10 +36,10 @@ async def health():
 @app.post("/v1/api/vault/create_or_update/")
 async def create_or_update(payload: Payload = None):
     logger.info("Calling create_or_update endpoint")
-    secrets_engines_list = client.sys.list_mounted_secrets_engines()['data']
+    secrets_engines_list = await vault_service.list_secrets_engines()
     flag = False
     for secrets_engine in secrets_engines_list:
-        if secrets_engine != payload.secret_path+"/":
+        if secrets_engine != payload.secret_path + "/":
             flag = False
         else:
             logger.info("Path already existed")
@@ -44,40 +47,9 @@ async def create_or_update(payload: Payload = None):
             break
     if flag:
         logger.info("Path already existed. Then just update policy and members")
-        await create_update_path_existed(payload)
+        await vault_service.create_update_path_existed(payload)
     else:
         logger.info("Path no existed. Then create path and update policy and members")
-        await create_secret_path(payload)
-        await create_update_path_existed(payload)
+        await vault_service.create_secret_path(payload)
+        await vault_service.create_update_path_existed(payload)
     return payload
-
-
-async def create_update_path_existed(payload):
-    logger.info("Starting create update policy")
-    policy = '''
-        path "%s/*" {
-            capabilities = ["create", "read", "update", "delete", "list"]
-        }
-    ''' % payload.secret_path
-    client.sys.create_or_update_policy(
-        name=payload.policy_name,
-        policy=policy,
-    )
-    logger.info("Policy created or updated")
-    logger.info("Create or update group")
-    client.secrets.identity.create_or_update_group(
-        name=payload.group_name,
-        policies=payload.policy_name,
-        member_entity_ids=list(payload.member_entity_ids)
-    )
-    logger.info(f'Group {payload.group_name} updated with the following members: {payload.member_entity_ids} and '
-                f'policy: {payload.policy_name}')
-
-
-async def create_secret_path(payload):
-    logger.info("Starting create secret path")
-    client.sys.enable_secrets_engine(
-        backend_type='kv',
-        path=payload.secret_path,
-    )
-    logger.info("Secret path created")
