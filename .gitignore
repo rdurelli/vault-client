@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+.idea
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development settings
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Miscellaneous
+*.DS_Store
+*.sqlite3
+node_modules/

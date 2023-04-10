@@ -1,0 +1,13 @@
+### Send POST request with json body
+POST http://127.0.0.1:80/v1/api/vault/create_or_update/
+Content-Type: application/json
+
+{
+    "policy_name": "teste",
+    "group_name": "ead-backend",
+    "secret_path": "durelli/cli2",
+    "member_entity_ids" : [
+        "b0729698-447f-f786-4f1c-684d438de3c2",
+        "4ebf7934-55b9-03d9-2810-cccb5d158291"
+    ]
+}
